@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- meta charset="utf-8" -->
+    <!-- meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" -->
+
+    <script src="js/HP.js"></script>
+    <script src="shaders/general.fsh"></script>
+    <script src="shaders/frag.fsh"></script>
+
+    <style>
+        body {
+            background-color: #333333;
+            font-family: Monospace;
+            font-size: 13px;
+            text-align: center;
+            background-color: #fff;
+            margin: 0px;
+            overflow: hidden;
+        }
+
+        #info {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            color: #fff;
+            background-color: rgba(37, 37, 37, 0.5);
+        }
+    </style>
+
+    <script type="module">
+
+        import * as THREE from 'https://cdn.skypack.dev/three@v0.130.1';
+
+        document.addEventListener("DOMContentLoaded", (event) => {
+            init();
+            requestAnimationFrame(animate);
+        });
+
+        var cvs1;
+        var camera, scene, renderer, plane;
+        var postCamera, postScene, target;
+        var uniforms, postUniforms;
+        var winWidth, winHeight, frustumSize;
+
+        function init() {
+            cvs1 = document.querySelector("#canvas1");
+            winWidth = window.innerWidth;
+            winHeight = window.innerHeight;
+            frustumSize = 8;
+
+            renderer = new THREE.WebGLRenderer({ canvas: cvs1 });
+            renderer.setClearColor(0x333333);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            camera = new THREE.OrthographicCamera(1, 1, 1, 1, 0, 2);
+            camera.position.z = 1;
+            scene = new THREE.Scene();
+
+            postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 2);
+            postCamera.position.z = 1;
+            postScene = new THREE.Scene();
+
+            target = new THREE.WebGLRenderTarget(winWidth, winHeight, {
+                texture: {
+                    format: THREE.RGBFormat,
+                    minFilter: THREE.NearestFilter,
+                    magFilter: THREE.NearestFilter,
+                    generateMipmaps: false
+                },
+                stencilBuffer: false
+            });
+
+            setupScene();
+            setupPost();
+
+            onWindowResize();
+            window.addEventListener("resize", onWindowResize, false);
+        }
+
+        function setupScene() {
+
+            uniforms = {
+                l: { value: HP.num(0) },
+                b: { value: HP.num(0) },
+                sx: { value: HP.num(1) },
+                sy: { value: HP.num(1) },
+                cc: { value: 0 },
+                iResolution: { value: [1.0, 1.0] }
+            };
+            uniforms.sy.value = HP.mul(uniforms.sx.value, HP.num(winHeight / winWidth));
+
+            var material = new THREE.ShaderMaterial({
+                vertexShader: vert().trim(),
+                fragmentShader: frag().trim(),
+                uniforms: uniforms
+            });
+
+            const radius = 8;
+            const geometry = new THREE.PlaneGeometry(radius * 2 * 2, radius * 2);
+            plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+
+        }
+
+        function setupPost() {
+
+            postUniforms = {
+                tTexture: { value: target.texture },
+            }
+
+            var postQuad = new THREE.Mesh(
+                new THREE.PlaneBufferGeometry(2, 2),
+                new THREE.ShaderMaterial({
+                    vertexShader: post_vert().trim(),
+                    fragmentShader: post_frag().trim(),
+                    uniforms: uniforms
+                })
+            );
+            postScene.add(postQuad);
+
+        }
+
+        function onWindowResize() {
+
+            winWidth = window.innerWidth;
+            winHeight = window.innerHeight;
+            cvs1.width = winWidth - 200;
+            cvs1.height = winHeight - 200;
+
+            var aspect = winWidth / winHeight;
+            camera.left = frustumSize * aspect / -2;
+            camera.right = frustumSize * aspect / 2;
+            camera.top = frustumSize / 2;
+            camera.bottom = frustumSize / -2;
+
+            camera.updateProjectionMatrix();
+            renderer.setSize(winWidth, winHeight);
+
+            var dpr = renderer.getPixelRatio();
+            target.setSize(winWidth * dpr, winHeight * dpr);
+
+            uniforms.iResolution.value = [winWidth, winHeight];
+
+        }
+
+        function animate() {
+            renderer.setRenderTarget(null);
+            renderer.render(scene, camera);
+        }
+
+        document.addEventListener("wheel", (event) => {
+            var d = event.deltaY > 0 ? HP.num(1.1) : HP.num(0.9);
+            var dcomp = event.deltaY > 0 ? HP.num(-0.1) : HP.num(0.1);
+            var mouseX = HP.num(event.clientX / winWidth);
+            var mouseY = HP.num(1 - event.clientY / winHeight);
+
+            if (event.deltaY < 0 && HP.isTooSmall(uniforms.sx.value)) {
+                return;
+            }
+
+            uniforms.l.value = HP.plus(uniforms.l.value,
+                HP.mul(
+                    uniforms.sx.value,
+                    HP.mul(mouseX, dcomp)
+                )
+            );
+            uniforms.b.value = HP.plus(uniforms.b.value,
+                HP.mul(
+                    uniforms.sy.value,
+                    HP.mul(mouseY, dcomp)
+                )
+            );
+            uniforms.sx.value = HP.mul(uniforms.sx.value, d);
+            uniforms.sy.value = HP.mul(uniforms.sx.value, HP.num(winHeight / winWidth));
+            uniforms.cc.value -= event.deltaY / 100
+
+            document.getElementById("info").innerHTML =
+                "X=" + HP.show(uniforms.l.value) + "<br>" +
+                "Y=" + HP.show(uniforms.b.value) + "<br>" +
+                "scale=" + HP.show(uniforms.sx.value);
+            requestAnimationFrame(animate);
+        });
+
+    </script>
+</head>
+
+<body>
+    <canvas id="canvas1" width="" height="window.innerHeight"></canvas>
+    <p id="info">Use mouse wheel to zoom in or move.</p>
+</body>
+
+</html>

@@ -1,6 +1,6 @@
 var HP = function () {
 
-    const N = 7;
+    const N = 9;
     const DIGIT = 18000;
 
     var num = function (a) {
@@ -93,20 +93,44 @@ var HP = function () {
 
     }
 
-    var show = function (a) {
+    var show = function (_a) {
+
+        var nearTenExp = Math.floor(Math.log10(DIGIT))
+        var nearTen = num(Math.pow(10, nearTenExp)); // 10000 when DIGIT=18000
+        var howManyNearTen = Math.ceil(Math.log10(DIGIT) * N / nearTenExp);
+
+        var a = _a.slice();
         var r = a[0] > 0 ? "" : "-";
-        r += a[1] / DIGIT;
-        for (var i = 2; i < N; i++) {
-            r += a[i];
+
+        var intPart = parseInt(Math.floor(a[1] / DIGIT))
+        r += intPart + ".";
+        a[1] -= intPart * DIGIT;
+
+        for (var i = 2; i < howManyNearTen; i++) {
+            a = mul(a, nearTen);
+            intPart = parseInt(Math.floor(a[1] / DIGIT))
+            r += (intPart + "").padStart(nearTenExp, '0') + " ";
+            a[1] -= intPart * DIGIT;
         }
+
         return r
+    }
+
+    var isTooSmall = function (a) {
+        for (var i = 1; i < N - 1; i++) {
+            if (a[i] != 0) {
+                return false
+            }
+        }
+        return a[N - 1] < Math.sqrt(DIGIT);
     }
 
     return {
         num: num,
         mul: mul,
         plus: plus,
-        show: show
+        show: show,
+        isTooSmall: isTooSmall
     }
 
 }();

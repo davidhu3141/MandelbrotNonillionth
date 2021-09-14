@@ -1,10 +1,10 @@
 function frag(){ return `
 
     #define PI 3.1415926535897932384626433832795
-    #define ITER 2000
+    #define ITER 1000
     #define DIGIT 18000
     #define DIGITF 18000.
-    #define N 7
+    #define N 9
 
     uniform int l[N];
     uniform int b[N];
@@ -40,11 +40,11 @@ function frag(){ return `
         r[2] = a[1] * b[2] + a[2] * b[1];
         r[3] = a[1] * b[3] + a[2] * b[2] + a[3] * b[1];
         r[4] = a[1] * b[4] + a[2] * b[3] + a[3] * b[2] + a[4] * b[1];
-        r[5] = a[1] * b[5] + a[2] * b[4] + a[3] * b[3] + a[4] * b[2] + a[5]*b[1];
-        r[6] = a[1] * b[6] + a[2] * b[5] + a[3] * b[4] + a[4] * b[3] + a[5]*b[2] + a[6]*b[1];
-        // r[7] = a[1] * b[7] + a[2] * b[6] + a[3] * b[5] + a[4] * b[4] + a[5]*b[2] + a[6]*b[2] + a[7]*b[1];
-        // r[8] = a[1] * b[8] + a[2] * b[7] + a[3] * b[6] + a[4] * b[5] + a[5]*b[2] + a[6]*b[3] + a[7]*b[2] + a[8]*b[1];
-        /**/
+        r[5] = a[1] * b[5] + a[2] * b[4] + a[3] * b[3] + a[4] * b[2] + a[5] * b[1];
+        r[6] = a[1] * b[6] + a[2] * b[5] + a[3] * b[4] + a[4] * b[3] + a[5] * b[2] + a[6] * b[1];
+        r[7] = a[1] * b[7] + a[2] * b[6] + a[3] * b[5] + a[4] * b[4] + a[5] * b[2] + a[6] * b[2] + a[7] * b[1];
+        r[8] = a[1] * b[8] + a[2] * b[7] + a[3] * b[6] + a[4] * b[5] + a[5] * b[2] + a[6] * b[3] + a[7] * b[2] + a[8] * b[1];
+        /* MODIFY THIS WHEN N CHANGES */
 
         for (int i = 2; i < N; i++) {
             r[i] += (r[i - 1] % DIGIT) * DIGIT;
@@ -92,9 +92,9 @@ function frag(){ return `
                 : a[4] != b[4] ? (a[4] > b[4] ? 1 : 2)
                 : a[5] != b[4] ? (a[4] > b[4] ? 1 : 2)
                 : a[6] != b[4] ? (a[4] > b[4] ? 1 : 2)
-                // : a[7] != b[4] ? (a[4] > b[4] ? 1 : 2)
-                // : a[8] != b[4] ? (a[4] > b[4] ? 1 : 2)
-                : 3;
+                : a[7] != b[4] ? (a[4] > b[4] ? 1 : 2)
+                : a[8] != b[4] ? (a[4] > b[4] ? 1 : 2)
+                : 3;/* MODIFY THIS WHEN N CHANGES */
 
             if (abslarger == 3){
                 HP_num(0.,r);
@@ -182,8 +182,8 @@ function frag(){ return `
     }
 
     void main() {
-        float cl = log(float(ITER)-float(cc)*1.);
-        gl_FragColor = lerpColor(clamp( log(valfunc()-float(cc)*1.)/cl, 0.0, 1.0 ));
+        float cl = log(float(ITER)-float(cc)*0.5);
+        gl_FragColor = lerpColor(clamp( log(valfunc()-float(cc)*0.5)/cl, 0.0, 1.0 ));
     }
 
 `}
